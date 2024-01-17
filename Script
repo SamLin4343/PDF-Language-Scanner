@@ -1,0 +1,48 @@
+### Replace pdf_path with the path to your PDF file. The toggle_interpreted variable can be set to True for interpreted meaning or False for direct translation.
+
+import PyPDF2
+from googletrans import Translator
+
+def find_asian_languages(text):
+    asian_languages = ["chi", "jpn", "kor", "ind", "thai", "vie", "mal", "khm", "bir", "tib"]
+    languages = []
+    for line in text.split("\n"):
+        for lang in asian_languages:
+            if any(word in line.lower() for word in ["is", "using", lang]):
+                languages.append(lang)
+                break
+    return list(set(languages))
+
+def translate_text(text, target="en"):
+    translator = Translator()
+    translated = translator.translate(text, dest=target)
+    return translated.text
+
+def translate_pdf(pdf_path, toggle_interpreted=False):
+    with open(pdf_path, "rb") as file:
+        pdf_reader = PyPDF2.PdfFileReader(file)
+        text = ""
+        for page_num in range(pdf_reader.numPages):
+            page = pdf_reader.getPage(page_num)
+            text += page.extractText()
+
+    asian_languages = find_asian_languages(text)
+    if not asian_languages:
+        print("No Asian languages found in the PDF.")
+        return
+
+    print(f"Asian languages found: {asian_languages}")
+
+    lines = text.split("\n")
+    for line in lines:
+        if any(lang in line.lower() for lang in asian_languages):
+            if toggle_interpreted:
+                translated = translate_text(line, target="en-au")  # Interpreted meaning
+            else:
+                translated = translate_text(line, target="en")  # Direct translation
+            print(f"Translated: {translated}")
+
+if __name__ == "__main__":
+    pdf_path = "path/to/your/pdf.pdf"
+    toggle_interpreted = False  # Set to True for interpreted meaning
+    translate_pdf(pdf_path, toggle_interpreted)
